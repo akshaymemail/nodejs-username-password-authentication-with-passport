@@ -1,6 +1,7 @@
 const express = require('express')
-const User = require('../config/db.js')
-const bcrypt = require('bcrypt')
+const User = require('../config/db')
+const passport = require('passport')
+
 
 const router = express.Router()
 
@@ -9,26 +10,16 @@ router.get('/register', (req, res) => {
 })
 
 router.post('/register', (req, res) => {
-    // hasing the password with 10 round of salting
-    bcrypt.hash(req.body.password, 10, function(err, hash) {
+    User.register({username : req.body.username}, req.body.password, (err, user) => {
         if(!err){
-            new User({
-                username : req.body.username,
-                password : hash
-            }).save(err => {
-                if(!err){
-                    // seccessfully registered
-                    res.render('register', {heading : "You've successfully registered 😁"})
-                }else{
-                    // there was an error
-                    res.render('register', {message : "There was an error ☹"})
-                }
+            // user shout be authenticated
+            passport.authenticate('local')(req, res,() => {
+                res.render('register', {heading : "You've successfully registered 😁"})
             })
         }else{
-            console.log(err)
+            res.render('register', {heading : err.message+' 😡'})
         }
-    });
-    
+    })
 })
 
 module.exports = router
